@@ -89,6 +89,10 @@ export async function POST(
 
               return Promise.resolve();
             }
+            
+            // Any upstream bytes count as activity for proxies; also start keep-alives
+            // before the first complete SSE frame (otherwise HAProxy may idle-timeout).
+            resetKeepAliveTimer();
 
             buffer += decoder.decode(value, { stream: true });
 
@@ -121,6 +125,9 @@ export async function POST(
           });
         };
 
+        // Begin keep-alives immediately so the browser↔UI connection survives long gaps
+        // until the first (or any) chunk from the controller.
+        resetKeepAliveTimer();
         pump();
       }
     });
