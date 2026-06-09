@@ -22,7 +22,8 @@ import { createSession, getSessionTasks, checkSessionExists } from "@/app/action
 import { deriveSessionTitle, isPlaceholderSessionTitle } from "@/lib/sessionTitle";
 import { normalizeSessionTimestamps } from "@/lib/sessionTimestamps";
 import { getAgentWithResolvedKind, waitForSandboxAgentReady } from "@/app/actions/agents";
-import { getUiRuntimeConfig, DEFAULT_STREAM_TIMEOUT_MS } from "@/app/actions/config";
+import { getUiRuntimeConfig } from "@/app/actions/config";
+import { DEFAULT_STREAM_TIMEOUT_MS } from "@/lib/constants";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createMessageHandlers, extractMessagesFromTasks, extractApprovalMessagesFromTasks, extractTokenStatsFromTasks, createMessage, ADKMetadata, ProcessedToolCallData } from "@/lib/messageHandlers";
