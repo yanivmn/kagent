@@ -1,8 +1,8 @@
 "use server";
 
 // Default client-side stream inactivity timeout (30 minutes) used when Helm does
-// not provide an override. Kept in sync with ui.streamTimeoutSeconds default.
-const DEFAULT_STREAM_TIMEOUT_MS = 1800000;
+// not provide an override via ui.streamTimeoutSeconds.
+export const DEFAULT_STREAM_TIMEOUT_MS = 1800000;
 
 export interface UiRuntimeConfig {
   streamTimeoutMs: number;

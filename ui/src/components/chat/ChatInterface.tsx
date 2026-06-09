@@ -22,7 +22,7 @@ import { createSession, getSessionTasks, checkSessionExists } from "@/app/action
 import { deriveSessionTitle, isPlaceholderSessionTitle } from "@/lib/sessionTitle";
 import { normalizeSessionTimestamps } from "@/lib/sessionTimestamps";
 import { getAgentWithResolvedKind, waitForSandboxAgentReady } from "@/app/actions/agents";
-import { getUiRuntimeConfig } from "@/app/actions/config";
+import { getUiRuntimeConfig, DEFAULT_STREAM_TIMEOUT_MS } from "@/app/actions/config";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createMessageHandlers, extractMessagesFromTasks, extractApprovalMessagesFromTasks, extractTokenStatsFromTasks, createMessage, ADKMetadata, ProcessedToolCallData } from "@/lib/messageHandlers";
@@ -37,10 +37,6 @@ import { Message, DataPart, Task, TaskState } from "@a2a-js/sdk";
 const RESUBSCRIBE_TASK_STATES: TaskState[] = ["submitted", "working"];
 // Task states that mean the session is busy (used by the cross-tab send guard).
 const ACTIVE_TASK_STATES: TaskState[] = ["submitted", "working", "input-required"];
-
-// Fallback stream inactivity timeout (30 minutes) until the Helm-provided runtime
-// config is loaded. Overridden by ui.streamTimeoutSeconds via getUiRuntimeConfig.
-const DEFAULT_STREAM_TIMEOUT_MS = 1800000;
 
 interface ChatInterfaceProps {
   selectedAgentName: string;
@@ -403,15 +399,20 @@ export default function ChatInterface({ selectedAgentName, selectedNamespace, se
   const consumeStream = async (stream: AsyncIterable<unknown>) => {
     let timeoutTimer: NodeJS.Timeout | null = null;
     let streamActive = true;
-    const streamTimeoutMs = streamTimeoutMsRef.current;
-    const timeoutLabel = `${Math.round(streamTimeoutMs / 60000)} minutes`;
+
+    const formatTimeout = (ms: number): string => {
+      const mins = ms / 60000;
+      return mins >= 1 ? `${Math.ceil(mins)} minutes` : `${Math.round(ms / 1000)} seconds`;
+    };
 
     const startTimeout = () => {
       if (timeoutTimer) clearTimeout(timeoutTimer);
+      const streamTimeoutMs = streamTimeoutMsRef.current;
       timeoutTimer = setTimeout(() => {
         if (streamActive) {
-          console.error(`⏰ Stream timeout - no events received for ${timeoutLabel}`);
-          toast.error(`⏰ Stream timed out - no events received for ${timeoutLabel}`);
+          const label = formatTimeout(streamTimeoutMs);
+          console.error(`⏰ Stream timeout - no events received for ${label}`);
+          toast.error(`⏰ Stream timed out - no events received for ${label}`);
           streamActive = false;
           abortControllerRef.current?.abort();
         }
